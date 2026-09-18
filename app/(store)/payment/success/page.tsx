@@ -1,0 +1,2 @@
+import {redirect} from 'next/navigation';import {createClient} from '@/lib/supabase/server';
+export default async function Success({searchParams}:{searchParams:Promise<{token?:string}>}){const {token}=await searchParams;if(!token)redirect('/');return <div className="center"><div className="card" style={{maxWidth:560,width:'100%',textAlign:'center'}}><div style={{fontSize:48}}>✓</div><h1>Payment successful</h1><p className="muted">Your payment has been verified. Your secure download is ready.</p><a className="btn" href={`/download/${token}`}>Download product</a></div></div>}

@@ -1,0 +1,1 @@
+export type Product={id:string;title:string;slug:string;short_description:string;description:string;price:number;thumbnail_url:string|null;preview_url:string|null;file_path:string;status:'active'|'draft';created_at:string;updated_at:string};

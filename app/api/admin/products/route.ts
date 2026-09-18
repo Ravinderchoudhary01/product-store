@@ -1,0 +1,3 @@
+import {NextResponse} from 'next/server';import {createAdminClient} from '@/lib/supabase/admin';import {createClient} from '@/lib/supabase/server';import {productSchema} from '@/lib/validation';
+async function guard(){const s=await createClient();const {data:{user}}=await s.auth.getUser();if(!user||user.email!==process.env.ADMIN_EMAIL)return null;return user}
+export async function POST(req:Request){if(!await guard())return NextResponse.json({error:'Unauthorized'},{status:401});try{const body=productSchema.parse(await req.json());const {data,error}=await createAdminClient().from('products').insert(body).select().single();if(error)throw error;return NextResponse.json(data)}catch(e:any){return NextResponse.json({error:e.message},{status:400})}}

@@ -1,0 +1,1 @@
+export type Order={id:string;product_id:string;customer_name:string;customer_email:string;amount:number;razorpay_order_id:string|null;razorpay_payment_id:string|null;payment_status:string;created_at:string;updated_at:string};

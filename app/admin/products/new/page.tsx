@@ -1,0 +1,1 @@
+import AdminHeader from '@/components/admin/AdminHeader';import ProductForm from '@/components/admin/ProductForm';export default function NewProduct(){return <><AdminHeader title="Add product"/><ProductForm/></>}

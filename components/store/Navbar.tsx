@@ -1,0 +1,1 @@
+export default function Navbar(){return <header className="container store-nav"><a href="/" className="brand brand-mark"><span className="brand-dot"/> DIGITAL STORE</a><nav className="navlinks"><a href="/#products">Products</a><a href="/#why">Why us</a><a href="/#faq">FAQ</a><a href="/#products" className="nav-cta">Browse products</a></nav></header>}

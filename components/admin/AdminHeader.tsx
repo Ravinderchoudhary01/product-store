@@ -1,0 +1,1 @@
+export default function AdminHeader({title}:{title:string}){return <div className="topbar"><div><h1>{title}</h1><p>Manage your digital store.</p></div><div className="admin-actions"><a href="/" className="btn secondary">View store ↗</a></div></div>}
