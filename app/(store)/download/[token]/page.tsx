@@ -3,6 +3,7 @@
 
 import { createAdminClient } from '@/lib/supabase/admin';
 import { notFound } from 'next/navigation';
+import DownloadButton from '@/components/store/DownloadButton';
 
 export default async function DownloadPage({
   params,
@@ -35,6 +36,10 @@ export default async function DownloadPage({
     ? order.products[0]
     : order?.products;
 
+    const userEmail = order?.user_email; // Assuming you have the user's email in the order data
+    const userName = order?.user_name; // Assuming you have the user's name in the order data
+
+    console.log(order, product, userEmail, userName);
   return (
     <div className="center">
       <div
@@ -49,12 +54,14 @@ export default async function DownloadPage({
           {product?.title}
         </p>
 
-        <a
+        {/* <a
           className="btn"
           href={`/api/download/${token}`}
         >
           Download file
-        </a>
+        </a> */}
+
+        <DownloadButton token={token} />
 
         <p
           className="muted"
@@ -64,6 +71,7 @@ export default async function DownloadPage({
           }}
         >
           This download link is temporary.
+          Contact at wellservice367@gmail.com in case of any issues.
         </p>
       </div>
     </div>
