@@ -36,10 +36,10 @@ export default async function DownloadPage({
     ? order.products[0]
     : order?.products;
 
-    const userEmail = order?.user_email; // Assuming you have the user's email in the order data
-    const userName = order?.user_name; // Assuming you have the user's name in the order data
+    // const userEmail = order?.user_email; // Assuming you have the user's email in the order data
+    // const userName = order?.user_name; // Assuming you have the user's name in the order data
 
-    console.log(order, product, userEmail, userName);
+  
   return (
     <div className="center">
       <div
