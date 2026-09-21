@@ -1,9 +1,14 @@
+
+
+
+// this function send pdf over the mail 
 // import nodemailer from 'nodemailer';
 
 // const transporter = nodemailer.createTransport({
 //   host: process.env.SMTP_HOST,
 //   port: Number(process.env.SMTP_PORT || 587),
 //   secure: process.env.SMTP_SECURE === 'true',
+
 //   auth: {
 //     user: process.env.SMTP_USER,
 //     pass: process.env.SMTP_PASSWORD,
@@ -22,13 +27,20 @@
 //   filename: string;
 // }) {
 //   await transporter.sendMail({
-//     from: `"Your Company Name" <${process.env.SMTP_USER}>`,
+//     from: `"Digital Build" <${process.env.SMTP_USER}>`,
+
 //     to: email,
+
 //     subject: `Your purchase is confirmed - ${productName}`,
 
 //     html: `
-//       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 30px;">
-        
+//       <div style="
+//         font-family: Arial, sans-serif;
+//         max-width: 600px;
+//         margin: auto;
+//         padding: 30px;
+//       ">
+
 //         <h2>Payment Successful 🎉</h2>
 
 //         <p>
@@ -36,24 +48,25 @@
 //         </p>
 
 //         <p>
-//           Your payment for <strong>${productName}</strong>
-//           has been successfully received.
+//           Your purchase of
+//           <strong>${productName}</strong>
+//           has been successfully completed.
 //         </p>
 
 //         <p>
-//           Your purchased PDF is attached to this email.
+//           Your PDF is attached to this email.
 //         </p>
 
 //         <p>
-//           You can also download your product from your
-//           purchase confirmation page.
+//           You can also download the PDF directly
+//           from the purchase page.
 //         </p>
 
 //         <br />
 
 //         <p>
 //           Regards,<br />
-//           <strong>Your Company Name</strong>
+//           <strong>Digital Build</strong>
 //         </p>
 
 //       </div>
@@ -69,82 +82,98 @@
 //   });
 // }
 
+//this function send the drive url over the mail :
 import nodemailer from 'nodemailer';
 
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: Number(process.env.SMTP_PORT || 587),
-  secure: process.env.SMTP_SECURE === 'true',
+const transporter =
+  nodemailer.createTransport({
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true,
 
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASSWORD,
-  },
-});
+    pool: true,
+    maxConnections: 2,
+    maxMessages: 50,
+
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASSWORD,
+    },
+  });
 
 export async function sendProductEmail({
   email,
+  customerName,
   productName,
-  pdfBuffer,
-  filename,
+  downloadUrl,
 }: {
   email: string;
+  customerName?: string | null;
   productName: string;
-  pdfBuffer: Buffer;
-  filename: string;
+  downloadUrl: string;
 }) {
   await transporter.sendMail({
-    from: `"Digital Build" <${process.env.SMTP_USER}>`,
+    from: `"Your Store" <${process.env.SMTP_USER}>`,
 
     to: email,
 
-    subject: `Your purchase is confirmed - ${productName}`,
+    subject: `Your purchase is ready - ${productName}`,
 
     html: `
-      <div style="
-        font-family: Arial, sans-serif;
-        max-width: 600px;
-        margin: auto;
-        padding: 30px;
-      ">
+      <div style="font-family: Arial, sans-serif; line-height: 1.6;">
+        
+        <h2>Thank you for your purchase!</h2>
 
-        <h2>Payment Successful 🎉</h2>
-
-        <p>
-          Thank you for your purchase.
-        </p>
+        ${
+          customerName
+            ? `<p>Hi ${customerName},</p>`
+            : ''
+        }
 
         <p>
           Your purchase of
           <strong>${productName}</strong>
-          has been successfully completed.
+          is ready.
         </p>
 
         <p>
-          Your PDF is attached to this email.
+          Click the button below to access your
+          purchased content.
+        </p>
+
+        <p style="margin: 30px 0;">
+          <a
+            href="${downloadUrl}"
+            target="_blank"
+            style="
+              display: inline-block;
+              padding: 12px 24px;
+              background: #111;
+              color: #fff;
+              text-decoration: none;
+              border-radius: 6px;
+            "
+          >
+            Access Your Purchase
+          </a>
+        </p>
+
+        <p style="font-size: 13px; color: #666;">
+          You can also copy and paste this link
+          into your browser:
+        </p>
+
+        <p style="font-size: 12px; word-break: break-all;">
+          ${downloadUrl}
         </p>
 
         <p>
-          You can also download the PDF directly
-          from the purchase page.
-        </p>
-
-        <br />
-
-        <p>
-          Regards,<br />
-          <strong>Digital Build</strong>
+          If you have any issues accessing your
+          purchase, contact us at
+          wellservice367@gmail.com.
         </p>
 
       </div>
     `,
-
-    attachments: [
-      {
-        filename,
-        content: pdfBuffer,
-        contentType: 'application/pdf',
-      },
-    ],
   });
 }

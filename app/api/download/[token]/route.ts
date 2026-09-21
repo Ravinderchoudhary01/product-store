@@ -229,6 +229,206 @@
 // }
 
 
+// this is the function which download the file and send pdf over the mail 
+// import { NextResponse, after } from 'next/server';
+// import { createAdminClient } from '@/lib/supabase/admin';
+// import { sendProductEmail } from '@/lib/email/sendPurchaseEmail';
+
+// export const runtime = 'nodejs';
+
+// export async function GET(
+//   _: Request,
+//   { params }: { params: Promise<{ token: string }> }
+// ) {
+//   const start = Date.now();
+
+//   const { token } = await params;
+
+//   const db = createAdminClient();
+
+//   // ----------------------------------------------------------
+//   // 1. Get token + order + product
+//   // ----------------------------------------------------------
+
+//   const { data, error } = await db
+//     .from('download_tokens')
+//     .select(`
+//       id,
+//       expires_at,
+//       download_count,
+//       customer_email,
+//       customer_name,
+//       orders(
+//         payment_status,
+//         products(
+//           file_path,
+//           title
+//         )
+//       )
+//     `)
+//     .eq('token', token)
+//     .single();
+
+//   if (error || !data) {
+//     return NextResponse.json(
+//       { error: 'Download link is invalid or expired' },
+//       { status: 403 }
+//     );
+//   }
+
+//   const order = Array.isArray(data.orders)
+//     ? data.orders[0]
+//     : data.orders;
+
+//   // ----------------------------------------------------------
+//   // 2. Validate
+//   // ----------------------------------------------------------
+
+//   if (
+//     order?.payment_status !== 'paid' ||
+//     !data.expires_at ||
+//     new Date(data.expires_at).getTime() < Date.now()
+//   ) {
+//     return NextResponse.json(
+//       { error: 'Download link is invalid or expired' },
+//       { status: 403 }
+//     );
+//   }
+
+//   const product = Array.isArray(order.products)
+//     ? order.products[0]
+//     : order.products;
+
+//   const path = product?.file_path;
+
+//   if (!path) {
+//     return NextResponse.json(
+//       { error: 'File is unavailable' },
+//       { status: 404 }
+//     );
+//   }
+
+//   // ----------------------------------------------------------
+//   // 3. Create signed URL
+//   // ----------------------------------------------------------
+
+//   const { data: urlData, error: urlError } =
+//     await db.storage
+//       .from('digital-products')
+//       .createSignedUrl(path, 600);
+
+//   if (urlError || !urlData?.signedUrl) {
+//     return NextResponse.json(
+//       { error: 'Unable to create download link' },
+//       { status: 500 }
+//     );
+//   }
+
+//   // ----------------------------------------------------------
+//   // 4. Fetch PDF
+//   // ----------------------------------------------------------
+
+//   const fileResponse = await fetch(urlData.signedUrl);
+
+//   if (!fileResponse.ok) {
+//     return NextResponse.json(
+//       { error: 'Unable to download file' },
+//       { status: 500 }
+//     );
+//   }
+
+//   const fileBuffer = await fileResponse.arrayBuffer();
+
+//   // ----------------------------------------------------------
+//   // 5. Update download count
+//   // ----------------------------------------------------------
+
+//   await db
+//     .from('download_tokens')
+//     .update({
+//       download_count: (data.download_count || 0) + 1,
+//     })
+//     .eq('id', data.id);
+
+//   // ----------------------------------------------------------
+//   // 6. Prepare email data
+//   // ----------------------------------------------------------
+
+//   const customerEmail = data.customer_email;
+//   const customerName = data.customer_name;
+
+//   const filename =
+//     path.split('/').pop() || 'ebook.pdf';
+
+//   const productTitle =
+//     product?.title || 'ebook';
+
+//   // ----------------------------------------------------------
+//   // 7. EMAIL RUNS AFTER RESPONSE
+//   // ----------------------------------------------------------
+
+//   after(async () => {
+//     if (!customerEmail) {
+//       console.error(
+//         'Purchase email skipped: customer email missing'
+//       );
+//       return;
+//     }
+
+//     try {
+//       console.log(
+//         `Starting purchase email for ${customerEmail}`
+//       );
+
+//       const pdfBuffer = Buffer.from(fileBuffer);
+
+//       await sendProductEmail({
+//         email: customerEmail,
+//         productName: productTitle,
+//         pdfBuffer,
+//         filename,
+//       });
+
+//       console.log(
+//         `Purchase email sent successfully to ${customerEmail}`
+//       );
+
+//     } catch (error) {
+//       console.error(
+//         'Purchase email failed:',
+//         error
+//       );
+//     }
+//   });
+
+//   // ----------------------------------------------------------
+//   // 8. RETURN PDF IMMEDIATELY
+//   // ----------------------------------------------------------
+
+//   console.log(
+//     `Download response prepared in ${Date.now() - start}ms`
+//   );
+
+//   return new NextResponse(fileBuffer, {
+//     status: 200,
+
+//     headers: {
+//       'Content-Type': 'application/pdf',
+
+//       'Content-Disposition':
+//         `attachment; filename="${filename}"`,
+
+//       'Content-Length':
+//         fileBuffer.byteLength.toString(),
+
+//       'Cache-Control':
+//         'private, no-store',
+//     },
+//   });
+// }
+
+
+// this is the function which show the drive url and send the drive url over mail not pdf 
 
 import { NextResponse, after } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
@@ -271,100 +471,102 @@ export async function GET(
 
   if (error || !data) {
     return NextResponse.json(
-      { error: 'Download link is invalid or expired' },
+      {
+        error: 'Download link is invalid or expired',
+      },
       { status: 403 }
     );
   }
+
+  // ----------------------------------------------------------
+  // 2. Get order
+  // ----------------------------------------------------------
 
   const order = Array.isArray(data.orders)
     ? data.orders[0]
     : data.orders;
 
   // ----------------------------------------------------------
-  // 2. Validate
+  // 3. Validate payment + token
   // ----------------------------------------------------------
 
   if (
     order?.payment_status !== 'paid' ||
     !data.expires_at ||
-    new Date(data.expires_at).getTime() < Date.now()
+    new Date(data.expires_at).getTime() <
+      Date.now()
   ) {
     return NextResponse.json(
-      { error: 'Download link is invalid or expired' },
+      {
+        error: 'Download link is invalid or expired',
+      },
       { status: 403 }
     );
   }
+
+  // ----------------------------------------------------------
+  // 4. Get product
+  // ----------------------------------------------------------
 
   const product = Array.isArray(order.products)
     ? order.products[0]
     : order.products;
 
-  const path = product?.file_path;
+  const driveUrl = product?.file_path;
 
-  if (!path) {
+  if (!driveUrl) {
     return NextResponse.json(
-      { error: 'File is unavailable' },
+      {
+        error: 'Download link is unavailable',
+      },
       { status: 404 }
     );
   }
 
   // ----------------------------------------------------------
-  // 3. Create signed URL
+  // 5. Validate Google Drive URL
   // ----------------------------------------------------------
 
-  const { data: urlData, error: urlError } =
-    await db.storage
-      .from('digital-products')
-      .createSignedUrl(path, 600);
-
-  if (urlError || !urlData?.signedUrl) {
+  if (
+    !driveUrl.startsWith(
+      'https://drive.google.com/'
+    )
+  ) {
     return NextResponse.json(
-      { error: 'Unable to create download link' },
+      {
+        error: 'Invalid product download link',
+      },
       { status: 500 }
     );
   }
 
   // ----------------------------------------------------------
-  // 4. Fetch PDF
-  // ----------------------------------------------------------
-
-  const fileResponse = await fetch(urlData.signedUrl);
-
-  if (!fileResponse.ok) {
-    return NextResponse.json(
-      { error: 'Unable to download file' },
-      { status: 500 }
-    );
-  }
-
-  const fileBuffer = await fileResponse.arrayBuffer();
-
-  // ----------------------------------------------------------
-  // 5. Update download count
+  // 6. Update download count
   // ----------------------------------------------------------
 
   await db
     .from('download_tokens')
     .update({
-      download_count: (data.download_count || 0) + 1,
+      download_count:
+        (data.download_count || 0) + 1,
     })
     .eq('id', data.id);
 
   // ----------------------------------------------------------
-  // 6. Prepare email data
+  // 7. Prepare email information
   // ----------------------------------------------------------
 
-  const customerEmail = data.customer_email;
-  const customerName = data.customer_name;
+  const customerEmail =
+    data.customer_email;
 
-  const filename =
-    path.split('/').pop() || 'ebook.pdf';
+  const customerName =
+    data.customer_name;
 
   const productTitle =
-    product?.title || 'ebook';
+    product?.title || 'Your purchased product';
 
   // ----------------------------------------------------------
-  // 7. EMAIL RUNS AFTER RESPONSE
+  // 8. Send Drive link after response
   // ----------------------------------------------------------
 
   after(async () => {
@@ -372,57 +574,45 @@ export async function GET(
       console.error(
         'Purchase email skipped: customer email missing'
       );
+
       return;
     }
 
     try {
       console.log(
-        `Starting purchase email for ${customerEmail}`
+        `Starting download link email for ${customerEmail}`
       );
-
-      const pdfBuffer = Buffer.from(fileBuffer);
 
       await sendProductEmail({
         email: customerEmail,
+        customerName,
         productName: productTitle,
-        pdfBuffer,
-        filename,
+        downloadUrl: driveUrl,
       });
 
       console.log(
-        `Purchase email sent successfully to ${customerEmail}`
+        `Download link email sent successfully to ${customerEmail}`
       );
-
     } catch (error) {
       console.error(
-        'Purchase email failed:',
+        'Download link email failed:',
         error
       );
     }
   });
 
   // ----------------------------------------------------------
-  // 8. RETURN PDF IMMEDIATELY
+  // 9. Return Google Drive URL
   // ----------------------------------------------------------
 
   console.log(
-    `Download response prepared in ${Date.now() - start}ms`
+    `Download link prepared in ${
+      Date.now() - start
+    }ms`
   );
 
-  return new NextResponse(fileBuffer, {
-    status: 200,
-
-    headers: {
-      'Content-Type': 'application/pdf',
-
-      'Content-Disposition':
-        `attachment; filename="${filename}"`,
-
-      'Content-Length':
-        fileBuffer.byteLength.toString(),
-
-      'Cache-Control':
-        'private, no-store',
-    },
+  return NextResponse.json({
+    success: true,
+    downloadUrl: driveUrl,
   });
 }
