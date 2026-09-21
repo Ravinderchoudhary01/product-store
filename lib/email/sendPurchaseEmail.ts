@@ -113,7 +113,7 @@ export async function sendProductEmail({
   downloadUrl: string;
 }) {
   await transporter.sendMail({
-    from: `"Your Store" <${process.env.SMTP_USER}>`,
+    from: `"Digital Build" <${process.env.SMTP_USER}>`,
 
     to: email,
 
